@@ -31,8 +31,8 @@ func (b *Board) initPieces(color Color) {
 	}
 
 	for i := range 8 {
-		whitePawn := NewPiece(color, Pawn)
-		b.grid[pawnRow][i] = &whitePawn
+		pawn := NewPiece(color, Pawn)
+		b.grid[pawnRow][i] = &pawn
 	}
 
 	knightOne, knightTwo := NewPiece(color, Knight), NewPiece(color, Knight)
@@ -47,10 +47,10 @@ func (b *Board) initPieces(color Color) {
 	b.grid[backRank][0] = &rookOne
 	b.grid[backRank][7] = &rookTwo
 
-	whiteQueen := NewPiece(color, Queen)
-	whiteKing := NewPiece(color, King)
-	b.grid[backRank][3] = &whiteQueen
-	b.grid[backRank][4] = &whiteKing
+	queen := NewPiece(color, Queen)
+	king := NewPiece(color, King)
+	b.grid[backRank][3] = &queen
+	b.grid[backRank][4] = &king
 }
 
 func (b *Board) Print() {
