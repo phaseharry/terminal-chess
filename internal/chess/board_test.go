@@ -129,8 +129,8 @@ func TestNewBoard(t *testing.T) {
 			piece := b.grid[tt.row][tt.col]
 			if piece == nil {
 				t.Errorf("grid[%d][%d] is empty, want %s %s", tt.row, tt.col, tt.color, tt.pieceType)
-			} else if piece.color != tt.color || piece.pieceType != tt.pieceType {
-				t.Errorf("grid[%d][%d] = %s %s, want %s %s", tt.row, tt.col, piece.color, piece.pieceType, tt.color, tt.pieceType)
+			} else if piece.Color != tt.color || piece.PieceType != tt.pieceType {
+				t.Errorf("grid[%d][%d] = %s %s, want %s %s", tt.row, tt.col, piece.Color, piece.PieceType, tt.color, tt.pieceType)
 			}
 		})
 	}
@@ -141,8 +141,8 @@ func TestNewBoard(t *testing.T) {
 			piece := b.grid[whitePawnRow][col]
 			if piece == nil {
 				t.Errorf("grid[%d][%d] is empty, want %s %s", whitePawnRow, col, White, Pawn)
-			} else if piece.color != White || piece.pieceType != Pawn {
-				t.Errorf("grid[%d][%d] has %s %s, want %s %s", whitePawnRow, col, piece.color, piece.pieceType, White, Pawn)
+			} else if piece.Color != White || piece.PieceType != Pawn {
+				t.Errorf("grid[%d][%d] has %s %s, want %s %s", whitePawnRow, col, piece.Color, piece.PieceType, White, Pawn)
 			}
 		}
 	})
@@ -153,8 +153,8 @@ func TestNewBoard(t *testing.T) {
 			piece := b.grid[blackPawnRow][col]
 			if piece == nil {
 				t.Errorf("grid[%d][%d] is empty, want %s %s", blackPawnRow, col, Black, Pawn)
-			} else if piece.color != Black || piece.pieceType != Pawn {
-				t.Errorf("grid[%d][%d] has %s %s, want %s %s", blackPawnRow, col, piece.color, piece.pieceType, Black, Pawn)
+			} else if piece.Color != Black || piece.PieceType != Pawn {
+				t.Errorf("grid[%d][%d] has %s %s, want %s %s", blackPawnRow, col, piece.Color, piece.PieceType, Black, Pawn)
 			}
 		}
 	})
@@ -164,7 +164,7 @@ func TestNewBoard(t *testing.T) {
 			for col := range len(b.grid[row]) {
 				piece := b.grid[row][col]
 				if piece != nil {
-					t.Errorf("grid[%d][%d] is not empty. It has piece %s %s", row, col, piece.color, piece.pieceType)
+					t.Errorf("grid[%d][%d] is not empty. It has piece %s %s", row, col, piece.Color, piece.PieceType)
 				}
 			}
 		}
