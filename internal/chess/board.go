@@ -66,16 +66,16 @@ func (b *Board) Print() {
 				row.WriteString("  ")
 				continue
 			}
-			if piece.color == White {
+			if piece.Color == White {
 				row.WriteByte('W')
 			} else {
 				row.WriteByte('B')
 			}
-			if piece.pieceType == Knight {
+			if piece.PieceType == Knight {
 				// writing n for knighht so king will still be k
 				row.WriteByte('n')
 			} else {
-				row.WriteByte(piece.pieceType[0])
+				row.WriteByte(piece.PieceType[0])
 			}
 		}
 		row.WriteByte(']')
