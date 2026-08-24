@@ -9,8 +9,8 @@ type Board struct {
 	grid [8][8]*Piece
 }
 
-func NewBoard() Board {
-	b := Board{}
+func NewBoard() *Board {
+	b := &Board{}
 	b.init()
 	return b
 }
