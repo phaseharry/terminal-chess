@@ -3,19 +3,19 @@ package chess
 type Game struct {
 	board    *Board
 	turn     Color
-	castling castlingRights
+	// castling castlingRights
 }
 
-type castlingRights struct {
-	white castlingGates
-	black castlingGates
-}
+// type castlingRights struct {
+// 	white castlingGates
+// 	black castlingGates
+// }
 
-type castlingGates struct {
-	rookOneMoved bool
-	rookTwoMoved bool
-	kingMoved    bool
-}
+// type castlingGates struct {
+// 	rookOneMoved bool
+// 	rookTwoMoved bool
+// 	kingMoved    bool
+// }
 
 func NewGame() *Game {
 	g := &Game{}
