@@ -5,8 +5,21 @@ import (
 	"strings"
 )
 
+const (
+	WhitePawnRow int = 1
+	WhiteBackRow int = 0
+	BlackPawnRow int = 6
+	BlackBackRow int = 7
+)
+
+
 type Board struct {
 	grid [8][8]*Piece
+}
+
+type Position struct {
+	Row int
+	Col int
 }
 
 func NewBoard() *Board {
@@ -22,12 +35,12 @@ func (b *Board) init() {
 
 func (b *Board) initPieces(color Color) {
 	// default is white
-	pawnRow := 1
-	backRank := 0
+	pawnRow := WhitePawnRow
+	backRank := WhiteBackRow
 
 	if color == Black {
-		pawnRow = 6
-		backRank = 7
+		pawnRow = BlackPawnRow
+		backRank = BlackBackRow
 	}
 
 	for i := range 8 {
@@ -51,6 +64,11 @@ func (b *Board) initPieces(color Color) {
 	king := NewPiece(color, King)
 	b.grid[backRank][3] = &queen
 	b.grid[backRank][4] = &king
+}
+
+func (b *Board) IsPositionOutOfBounds(pos Position) bool {
+	row, col := pos.Row, pos.Col
+	return row < 0 || row >= len(b.grid) || col < 0 || col >= len(b.grid[0])
 }
 
 func (b *Board) Print() {
