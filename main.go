@@ -5,6 +5,6 @@ import (
 )
 
 func main() {
-	board := chess.NewBoard()
-	board.Print()
+	game := chess.NewGame()
+	game.GetAvailableMoves(chess.Position{Row: 0, Col: 0})
 }
