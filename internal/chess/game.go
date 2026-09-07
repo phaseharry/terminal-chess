@@ -70,11 +70,11 @@ func (g *Game) GetAvailableMoves(sourcePosition Position) ([]Position, error) {
 
 	// should never happen
 	if g.board.IsPositionOutOfBounds(sourcePosition) {
-		return availablePositions, errors.New("Invalid source position")
+		return availablePositions, errors.New("invalid source position")
 	}
 
 	if g.board.grid[sourceRow][sourceCol] == nil {
-		return availablePositions, errors.New("No piece at source position to move")
+		return availablePositions, errors.New("no piece at source position to move")
 	}
 
 	piece := g.board.grid[sourceRow][sourceCol]
