@@ -21,7 +21,7 @@ type MoveDetails struct {
 type castlingState struct {
 	whiteKingSideRook  rookStatus
 	whiteQueenSideRook rookStatus
-	whiteKingMovied    bool
+	whiteKingMoved     bool
 	blackKingSideRook  rookStatus
 	blackQueenSideRook rookStatus
 	blackKingMoved     bool
@@ -45,20 +45,20 @@ func (g *Game) initGame() {
 	g.turn = White
 	g.castling = castlingState{
 		whiteKingSideRook: rookStatus{
-			Rook:  g.board.grid[WhiteBackRow][0],
+			Rook:  g.board.grid[WhiteBackRow][7],
 			Moved: false,
 		},
 		whiteQueenSideRook: rookStatus{
-			Rook:  g.board.grid[WhiteBackRow][7],
+			Rook:  g.board.grid[WhiteBackRow][0],
 			Moved: false,
 		},
 		blackKingMoved: false,
 		blackKingSideRook: rookStatus{
-			Rook:  g.board.grid[BlackBackRow][0],
+			Rook:  g.board.grid[BlackBackRow][7],
 			Moved: false,
 		},
 		blackQueenSideRook: rookStatus{
-			Rook:  g.board.grid[BlackBackRow][7],
+			Rook:  g.board.grid[BlackBackRow][0],
 			Moved: false,
 		},
 	}
@@ -80,7 +80,7 @@ func (g *Game) GetAvailableMoves(sourcePosition Position) ([]Position, error) {
 	piece := g.board.grid[sourceRow][sourceCol]
 
 	switch piece.PieceType {
-	case King, Rook:
+	case King:
 		availablePositions = g.getMovesForPiece(sourcePosition, PieceMoves[piece.PieceType])
 		availablePositions = append(availablePositions, g.getMovesForCastlablePieces(sourcePosition)...)
 	case Pawn:
@@ -94,31 +94,54 @@ func (g *Game) GetAvailableMoves(sourcePosition Position) ([]Position, error) {
 
 func (g *Game) getMovesForCastlablePieces(sourcePosition Position) []Position {
 	var castleMoves []Position
+	sourcePiece := g.board.grid[sourcePosition.Row][sourcePosition.Col]
+	sourceColor := sourcePiece.Color
 
-	castlingRights := g.castling
-	// king has already been moved so it cannot castle anymore
-	if (g.turn == White && castlingRights.whiteKingMovied) || (g.turn == Black && castlingRights.blackKingMoved) {
+	backrow := WhiteBackRow
+	kingMoved := g.castling.whiteKingMoved
+	kingSideRookMoved := g.castling.whiteKingSideRook.Moved
+	queenSideRookMoved := g.castling.whiteQueenSideRook.Moved
+
+	if sourceColor == Black {
+		backrow = BlackBackRow
+		kingMoved = g.castling.blackKingMoved
+		kingSideRookMoved = g.castling.blackKingSideRook.Moved
+		queenSideRookMoved = g.castling.blackQueenSideRook.Moved
+	}
+
+	// king has already been moved
+	if kingMoved {
 		return castleMoves
 	}
 
-	sourcePiece := g.board.grid[sourcePosition.Row][sourcePosition.Col]
-
-	// for a Rook, check if this rook has moved yet. If it has, then immiediately return
-	if sourcePiece.PieceType == Rook && g.turn == White {
-		if (sourcePiece == castlingRights.whiteKingSideRook.Rook && castlingRights.whiteKingSideRook.Moved) ||
-			(sourcePiece == castlingRights.whiteQueenSideRook.Rook && castlingRights.whiteQueenSideRook.Moved) {
-			return castleMoves
+	// check if king side castling is possible if the rook has not been moved yet
+	if !kingSideRookMoved {
+		// [n,x,x,x,K,x,x,R] -> [x,x,x,x,x,R,K,x]
+		kingSideEmpty := true
+		for _, col := range []int{6, 7} {
+			if g.board.grid[backrow][col] != nil {
+				kingSideEmpty = false
+			}
 		}
-		// king side validation
-		// [R,x,x,x,K,x,x,x] -> [x,x,K,R,x,x,x,x]
-
-	}
-	if sourcePiece.PieceType == Rook && g.turn == Black {
-		if (sourcePiece == castlingRights.blackKingSideRook.Rook && castlingRights.blackKingSideRook.Moved) ||
-			(sourcePiece == castlingRights.blackQueenSideRook.Rook && castlingRights.blackQueenSideRook.Moved) {
-			return castleMoves
+		if kingSideEmpty {
+			castleMoves = append(castleMoves, Position{backrow, 6})
 		}
 	}
+
+	// check if queen side castling is possible if the rook has not been moved yet
+	if !queenSideRookMoved {
+		// [R,x,x,x,K,x,x,R] -> [x,x,K,R,x,x,x,x]
+		queenSideEmpty := true
+		for _, col := range []int{1, 2, 3} {
+			if g.board.grid[backrow][col] != nil {
+				queenSideEmpty = false
+			}
+		}
+		if queenSideEmpty {
+			castleMoves = append(castleMoves, Position{backrow, 2})
+		}
+	}
+
 	return castleMoves
 }
 
@@ -265,11 +288,3 @@ func (g *Game) getMovesForPiece(sourcePosition Position, moveSpec MoveSpec) []Po
 func (g *Game) Print() {
 	g.board.Print()
 }
-
-// func (g *Game) isMoveLegal() bool {
-// 	return false
-// }
-
-// func (g *Game) isCheck() bool {
-// 	return false
-// }
