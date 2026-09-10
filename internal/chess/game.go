@@ -118,7 +118,7 @@ func (g *Game) getMovesForCastlablePieces(sourcePosition Position) []Position {
 	if !kingSideRookMoved {
 		// [n,x,x,x,K,x,x,R] -> [x,x,x,x,x,R,K,x]
 		kingSideEmpty := true
-		for _, col := range []int{6, 7} {
+		for _, col := range []int{5, 6} {
 			if g.board.grid[backrow][col] != nil {
 				kingSideEmpty = false
 			}

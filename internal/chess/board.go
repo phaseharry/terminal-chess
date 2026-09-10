@@ -12,7 +12,6 @@ const (
 	BlackBackRow int = 7
 )
 
-
 type Board struct {
 	grid [8][8]*Piece
 }
