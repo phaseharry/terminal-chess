@@ -5,6 +5,10 @@ import (
 	"math"
 )
 
+var ErrInvalidPosition = errors.New("invalid position")
+
+var ErrNoPieceAtPosition = errors.New("no piece at position to move")
+
 type Game struct {
 	board    *Board
 	turn     Color
@@ -70,11 +74,11 @@ func (g *Game) GetAvailableMoves(sourcePosition Position) ([]Position, error) {
 
 	// should never happen
 	if g.board.IsPositionOutOfBounds(sourcePosition) {
-		return availablePositions, errors.New("invalid source position")
+		return availablePositions, ErrInvalidPosition
 	}
 
 	if g.board.grid[sourceRow][sourceCol] == nil {
-		return availablePositions, errors.New("no piece at source position to move")
+		return availablePositions, ErrNoPieceAtPosition
 	}
 
 	piece := g.board.grid[sourceRow][sourceCol]
