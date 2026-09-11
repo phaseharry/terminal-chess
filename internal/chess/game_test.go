@@ -38,12 +38,68 @@ func TestNewGame(t *testing.T) {
 	})
 }
 
-// func newEmptyGame() *Game {
-// 	g := NewGame()
-// 	g.board.grid = [8][8]*Piece{}
-// 	g.moves = nil
-// 	return g
-// }
+func newEmptyGame() *Game {
+	g := NewGame()
+	g.board.grid = [8][8]*Piece{}
+	g.moves = nil
+	return g
+}
+
+// getDifferentPositionsBetweenGotAndWant reports which of want are absent from got, and which of got were not wanted.
+// Both are nil when the two describe the same set.
+func getDifferentPositionsBetweenGotAndWant(got, want []Position) ([]Position, []Position) {
+	inGot := make(map[Position]bool, len(got))
+	for _, position := range got {
+		inGot[position] = true
+	}
+	inWant := make(map[Position]bool, len(want))
+	for _, position := range want {
+		inWant[position] = true
+	}
+
+	var missing []Position
+	var unexpected []Position
+	for _, position := range want {
+		if !inGot[position] {
+			missing = append(missing, position)
+		}
+	}
+	for _, position := range got {
+		if !inWant[position] {
+			unexpected = append(unexpected, position)
+		}
+	}
+	sortPositions(missing)
+	sortPositions(unexpected)
+	return missing, unexpected
+}
+
+func getDifferenceBetweenTwoPositionLists(got, want []Position) ([]Position, []Position) {
+	inGot := make(map[Position]bool, len(got))
+	for _, position := range got {
+		inGot[position] = true
+	}
+	inWant := make(map[Position]bool, len(want))
+	for _, position := range want {
+		inWant[position] = true
+	}
+
+	var missing []Position
+	var unexpected []Position
+	for _, position := range want {
+		if !inGot[position] {
+			missing = append(missing, position)
+		}
+	}
+	for _, position := range got {
+		if !inWant[position] {
+			unexpected = append(unexpected, position)
+		}
+	}
+	sortPositions(missing)
+	sortPositions(unexpected)
+	return missing, unexpected
+}
 
 func sortPositions(positions []Position) {
 	slices.SortFunc(positions, func(a, b Position) int {
@@ -53,11 +109,16 @@ func sortPositions(positions []Position) {
 
 func TestGame_GetAvailableMoves(t *testing.T) {
 	type GetAvailableMovesTests struct {
-		name    string
-		setup   func() *Game
-		pos     Position
-		want    []Position
-		wantErr error
+		name  string
+		setup func() *Game
+		pos   Position
+		// used for when we want to test for all the moves available for a piece at current position
+		want []Position
+		// used for when we want to test that a piece does not explicitly does not include a specific move(s)
+		notWant []Position
+		// used for when we want to test that the outputted moves includes the want moves
+		wantAtLeast []Position
+		wantErr     error
 	}
 
 	tests := []GetAvailableMovesTests{
@@ -274,7 +335,6 @@ func TestGame_GetAvailableMoves(t *testing.T) {
 				{4, 7},
 			},
 		},
-		// black back rank mirrors white
 		{
 			name:  "Black queen-side rook is blocked at the start",
 			setup: NewGame,
@@ -329,6 +389,198 @@ func TestGame_GetAvailableMoves(t *testing.T) {
 			pos:   Position{7, 7},
 			want:  []Position{},
 		},
+		{
+			name: "White king can castle with queen-side rook if both have not been moved",
+			setup: func() *Game {
+				game := newEmptyGame()
+				king, queenSideRook := NewPiece(White, King), NewPiece(White, Rook)
+				game.board.grid[WhiteBackRow][4] = &king
+				game.board.grid[WhiteBackRow][0] = &queenSideRook
+				return game
+			},
+			pos:         Position{WhiteBackRow, 4},
+			wantAtLeast: []Position{{WhiteBackRow, 2}},
+		},
+		{
+			name: "White king can castle with king-side rook if both have not been moved",
+			setup: func() *Game {
+				game := newEmptyGame()
+				king, kingSideRook := NewPiece(White, King), NewPiece(White, Rook)
+				game.board.grid[WhiteBackRow][4] = &king
+				game.board.grid[WhiteBackRow][7] = &kingSideRook
+				return game
+			},
+			pos:         Position{WhiteBackRow, 4},
+			wantAtLeast: []Position{{WhiteBackRow, 6}},
+		},
+		{
+			name: "White king can castle with both king-side & queen-side rooks if all have not been moved",
+			setup: func() *Game {
+				game := newEmptyGame()
+				king, kingSideRook, queenSideRook := NewPiece(White, King), NewPiece(White, Rook), NewPiece(White, Rook)
+				game.board.grid[WhiteBackRow][4] = &king
+				game.board.grid[WhiteBackRow][7] = &kingSideRook
+				game.board.grid[WhiteBackRow][0] = &queenSideRook
+				return game
+			},
+			pos: Position{WhiteBackRow, 4},
+			wantAtLeast: []Position{
+				{WhiteBackRow, 2},
+				{WhiteBackRow, 6},
+			},
+		},
+		{
+			name: "White king cannot castle if the king has been moved but the rooks have not been moved",
+			setup: func() *Game {
+				game := newEmptyGame()
+				game.castling.whiteKingMoved = true
+				king, kingSideRook, queenSideRook := NewPiece(White, King), NewPiece(White, Rook), NewPiece(White, Rook)
+				game.board.grid[3][6] = &king
+				game.board.grid[WhiteBackRow][7] = &kingSideRook
+				game.board.grid[WhiteBackRow][0] = &queenSideRook
+				return game
+			},
+			pos: Position{3, 6},
+			notWant: []Position{
+				{WhiteBackRow, 2},
+				{WhiteBackRow, 6},
+			},
+		},
+		{
+			name: "White king cannot castle if the rooks have been moved",
+			setup: func() *Game {
+				game := newEmptyGame()
+				game.castling.whiteQueenSideRook.Moved = true
+				game.castling.whiteKingSideRook.Moved = true
+				king, kingSideRook, queenSideRook := NewPiece(White, King), NewPiece(White, Rook), NewPiece(White, Rook)
+				game.board.grid[WhiteBackRow][4] = &king
+				game.board.grid[1][7] = &kingSideRook
+				game.board.grid[1][0] = &queenSideRook
+				return game
+			},
+			pos: Position{WhiteBackRow, 4},
+			notWant: []Position{
+				{WhiteBackRow, 2},
+				{WhiteBackRow, 6},
+			},
+		},
+		{
+			name: "White king cannot castle if there are pieces blocking the cells between the rooks and the king",
+			setup: func() *Game {
+				game := newEmptyGame()
+				whiteKing, whiteKingSideRook, whiteQueenSideRook := NewPiece(White, King), NewPiece(White, Rook), NewPiece(White, Rook)
+				whiteBishop, blackKnight := NewPiece(White, Bishop), NewPiece(Black, Knight)
+
+				game.board.grid[WhiteBackRow][0] = &whiteQueenSideRook
+				game.board.grid[WhiteBackRow][1] = &whiteBishop
+				game.board.grid[WhiteBackRow][4] = &whiteKing
+				game.board.grid[WhiteBackRow][5] = &blackKnight
+				game.board.grid[WhiteBackRow][7] = &whiteKingSideRook
+
+				return game
+			},
+			pos: Position{WhiteBackRow, 4},
+			notWant: []Position{
+				{WhiteBackRow, 2},
+				{WhiteBackRow, 6},
+			},
+		},
+		{
+			name: "Black king can castle with queen-side rook if both have not been moved",
+			setup: func() *Game {
+				game := newEmptyGame()
+				king, queenSideRook := NewPiece(Black, King), NewPiece(Black, Rook)
+				game.board.grid[BlackBackRow][4] = &king
+				game.board.grid[BlackBackRow][0] = &queenSideRook
+				return game
+			},
+			pos:         Position{BlackBackRow, 4},
+			wantAtLeast: []Position{{BlackBackRow, 2}},
+		},
+		{
+			name: "Black king can castle with king-side rook if both have not been moved",
+			setup: func() *Game {
+				game := newEmptyGame()
+				king, kingSideRook := NewPiece(Black, King), NewPiece(Black, Rook)
+				game.board.grid[BlackBackRow][4] = &king
+				game.board.grid[BlackBackRow][7] = &kingSideRook
+				return game
+			},
+			pos:         Position{BlackBackRow, 4},
+			wantAtLeast: []Position{{BlackBackRow, 6}},
+		},
+		{
+			name: "Black king can castle with both king-side & queen-side rooks if all have not been moved",
+			setup: func() *Game {
+				game := newEmptyGame()
+				king, kingSideRook, queenSideRook := NewPiece(Black, King), NewPiece(Black, Rook), NewPiece(Black, Rook)
+				game.board.grid[BlackBackRow][4] = &king
+				game.board.grid[BlackBackRow][7] = &kingSideRook
+				game.board.grid[BlackBackRow][0] = &queenSideRook
+				return game
+			},
+			pos: Position{BlackBackRow, 4},
+			wantAtLeast: []Position{
+				{BlackBackRow, 2},
+				{BlackBackRow, 6},
+			},
+		},
+		{
+			name: "Black king cannot castle if the king has been moved but the rooks have not been moved",
+			setup: func() *Game {
+				game := newEmptyGame()
+				game.castling.blackKingMoved = true
+				king, kingSideRook, queenSideRook := NewPiece(Black, King), NewPiece(Black, Rook), NewPiece(Black, Rook)
+				game.board.grid[4][6] = &king
+				game.board.grid[BlackBackRow][7] = &kingSideRook
+				game.board.grid[BlackBackRow][0] = &queenSideRook
+				return game
+			},
+			pos: Position{4, 6},
+			notWant: []Position{
+				{BlackBackRow, 2},
+				{BlackBackRow, 6},
+			},
+		},
+		{
+			name: "Black king cannot castle if the rooks have been moved",
+			setup: func() *Game {
+				game := newEmptyGame()
+				game.castling.blackQueenSideRook.Moved = true
+				game.castling.blackKingSideRook.Moved = true
+				king, kingSideRook, queenSideRook := NewPiece(Black, King), NewPiece(Black, Rook), NewPiece(Black, Rook)
+				game.board.grid[BlackBackRow][4] = &king
+				game.board.grid[6][7] = &kingSideRook
+				game.board.grid[6][0] = &queenSideRook
+				return game
+			},
+			pos: Position{BlackBackRow, 4},
+			notWant: []Position{
+				{BlackBackRow, 2},
+				{BlackBackRow, 6},
+			},
+		},
+		{
+			name: "Black king cannot castle if there are pieces blocking the cells between the rooks and the king",
+			setup: func() *Game {
+				game := newEmptyGame()
+				blackKing, blackKingSideRook, blackQueenSideRook := NewPiece(Black, King), NewPiece(Black, Rook), NewPiece(Black, Rook)
+				blackBishop, whiteKnight := NewPiece(Black, Bishop), NewPiece(White, Knight)
+
+				game.board.grid[BlackBackRow][0] = &blackQueenSideRook
+				game.board.grid[BlackBackRow][1] = &blackBishop
+				game.board.grid[BlackBackRow][4] = &blackKing
+				game.board.grid[BlackBackRow][5] = &whiteKnight
+				game.board.grid[BlackBackRow][7] = &blackKingSideRook
+
+				return game
+			},
+			pos: Position{BlackBackRow, 4},
+			notWant: []Position{
+				{BlackBackRow, 2},
+				{BlackBackRow, 6},
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -338,10 +590,26 @@ func TestGame_GetAvailableMoves(t *testing.T) {
 			if tt.wantErr != err {
 				t.Errorf("want error: %v, got error: %v", tt.wantErr, err)
 			}
-			sortPositions(tt.want)
-			sortPositions(got)
-			if !slices.Equal(got, tt.want) {
-				t.Errorf("GetAvailableMoves(%v) = %v, want %v", tt.pos, got, tt.want)
+
+			if tt.wantAtLeast != nil {
+				if missing, _ := getDifferentPositionsBetweenGotAndWant(got, tt.wantAtLeast); len(missing) > 0 {
+					t.Errorf("GetAvailableMoves(%v) = %v, missing %v", tt.pos, got, missing)
+				}
+			}
+
+			if tt.notWant != nil {
+				for _, position := range tt.notWant {
+					if slices.Contains(got, position) {
+						t.Errorf("GetAvailableMoves(%v) = %v, should not include %v", tt.pos, got, position)
+					}
+				}
+			}
+
+			if tt.want != nil {
+				missing, unexpected := getDifferentPositionsBetweenGotAndWant(got, tt.want)
+				if len(missing) > 0 || len(unexpected) > 0 {
+					t.Errorf("GetAvailableMoves(%v) = %v: missing %v, unexpected %v", tt.pos, got, missing, unexpected)
+				}
 			}
 		})
 	}
