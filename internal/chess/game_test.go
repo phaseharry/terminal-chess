@@ -581,6 +581,108 @@ func TestGame_GetAvailableMoves(t *testing.T) {
 				{BlackBackRow, 6},
 			},
 		},
+		{
+			name: "White pawn can move forward diagonally one space if there is an opposing black piece at that space",
+			setup: func() *Game {
+				game := newEmptyGame()
+				whitePawn, blackQueen := NewPiece(White, Pawn), NewPiece(Black, Queen)
+				game.board.grid[4][4] = &whitePawn
+				game.board.grid[5][5] = &blackQueen
+				return game
+			},
+			pos: Position{4, 4},
+			wantAtLeast: []Position{
+				{5, 5},
+			},
+		},
+		{
+			name: "White pawn can only move forward one space at a time after it has left its initial starting position",
+			setup: func() *Game {
+				game := newEmptyGame()
+				game.moves = append(game.moves, MoveDetails{
+					Piece:          NewPiece(Black, Pawn),
+					SourcePosition: Position{BlackBackRow, 4},
+					TargetPosition: Position{BlackBackRow - 2, 4},
+				})
+				whitePawn := NewPiece(White, Pawn)
+				game.board.grid[4][4] = &whitePawn
+				return game
+			},
+			pos: Position{4, 4},
+			want: []Position{
+				{5, 4},
+			},
+		},
+		{
+			name: "White pawn can perform an enpassant if the last move was a black pawn that moved 2 spaces directly adjacent to it",
+			setup: func() *Game {
+				game := newEmptyGame()
+				whitePawn, blackPawn := NewPiece(White, Pawn), NewPiece(Black, Pawn)
+				game.moves = append(game.moves, MoveDetails{
+					Piece:          blackPawn,
+					SourcePosition: Position{BlackBackRow, 4},
+					TargetPosition: Position{BlackBackRow - 2, 4},
+				})
+				game.board.grid[5][4] = &blackPawn
+				game.board.grid[5][5] = &whitePawn
+				return game
+			},
+			pos: Position{5, 5},
+			wantAtLeast: []Position{
+				{6, 4},
+			},
+		},
+		{
+			name: "Black pawn can move forward diagonally one space if there is an opposing white piece at that space",
+			setup: func() *Game {
+				game := newEmptyGame()
+				blackPawn, whiteQueen := NewPiece(Black, Pawn), NewPiece(White, Queen)
+				game.board.grid[4][4] = &blackPawn
+				game.board.grid[3][5] = &whiteQueen
+				return game
+			},
+			pos: Position{4, 4},
+			wantAtLeast: []Position{
+				{3, 5},
+			},
+		},
+		{
+			name: "Black pawn can only move forward one space at a time after it has left its initial starting position",
+			setup: func() *Game {
+				game := newEmptyGame()
+				game.moves = append(game.moves, MoveDetails{
+					Piece:          NewPiece(White, Pawn),
+					SourcePosition: Position{WhiteBackRow, 4},
+					TargetPosition: Position{WhiteBackRow + 2, 4},
+				})
+				blackPawn := NewPiece(Black, Pawn)
+				game.board.grid[4][4] = &blackPawn
+				return game
+			},
+			pos: Position{4, 4},
+			want: []Position{
+				{3, 4},
+			},
+		},
+		{
+			name: "Black pawn can perform an enpassant if the last move was a white pawn that moved 2 spaces directly adjacent to it",
+			setup: func() *Game {
+				game := newEmptyGame()
+				blackPawn, whitePawn := NewPiece(Black, Pawn), NewPiece(White, Pawn)
+				game.moves = append(game.moves, MoveDetails{
+					Piece:          whitePawn,
+					SourcePosition: Position{WhiteBackRow, 4},
+					TargetPosition: Position{WhiteBackRow + 2, 4},
+				})
+				game.board.grid[2][4] = &whitePawn
+				game.board.grid[2][5] = &blackPawn
+				return game
+			},
+			pos: Position{2, 5},
+			wantAtLeast: []Position{
+				{1, 4},
+			},
+		},
 	}
 
 	for _, tt := range tests {
