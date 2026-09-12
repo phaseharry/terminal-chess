@@ -6,10 +6,10 @@ import (
 )
 
 const (
-	WhitePawnRow int = 1
-	WhiteBackRow int = 0
-	BlackPawnRow int = 6
-	BlackBackRow int = 7
+	WhitePawnRank int = 1
+	WhiteBackRank int = 0
+	BlackPawnRank int = 6
+	BlackBackRank int = 7
 )
 
 type Board struct {
@@ -34,12 +34,12 @@ func (b *Board) init() {
 
 func (b *Board) initPieces(color Color) {
 	// default is white
-	pawnRow := WhitePawnRow
-	backRank := WhiteBackRow
+	pawnRow := WhitePawnRank
+	backRank := WhiteBackRank
 
 	if color == Black {
-		pawnRow = BlackPawnRow
-		backRank = BlackBackRow
+		pawnRow = BlackPawnRank
+		backRank = BlackBackRank
 	}
 
 	for i := range 8 {

@@ -74,33 +74,6 @@ func getDifferentPositionsBetweenGotAndWant(got, want []Position) ([]Position, [
 	return missing, unexpected
 }
 
-func getDifferenceBetweenTwoPositionLists(got, want []Position) ([]Position, []Position) {
-	inGot := make(map[Position]bool, len(got))
-	for _, position := range got {
-		inGot[position] = true
-	}
-	inWant := make(map[Position]bool, len(want))
-	for _, position := range want {
-		inWant[position] = true
-	}
-
-	var missing []Position
-	var unexpected []Position
-	for _, position := range want {
-		if !inGot[position] {
-			missing = append(missing, position)
-		}
-	}
-	for _, position := range got {
-		if !inWant[position] {
-			unexpected = append(unexpected, position)
-		}
-	}
-	sortPositions(missing)
-	sortPositions(unexpected)
-	return missing, unexpected
-}
-
 func sortPositions(positions []Position) {
 	slices.SortFunc(positions, func(a, b Position) int {
 		return cmp.Or(cmp.Compare(a.Row, b.Row), cmp.Compare(a.Col, b.Col))
@@ -394,39 +367,39 @@ func TestGame_GetAvailableMoves(t *testing.T) {
 			setup: func() *Game {
 				game := newEmptyGame()
 				king, queenSideRook := NewPiece(White, King), NewPiece(White, Rook)
-				game.board.grid[WhiteBackRow][4] = &king
-				game.board.grid[WhiteBackRow][0] = &queenSideRook
+				game.board.grid[WhiteBackRank][4] = &king
+				game.board.grid[WhiteBackRank][0] = &queenSideRook
 				return game
 			},
-			pos:         Position{WhiteBackRow, 4},
-			wantAtLeast: []Position{{WhiteBackRow, 2}},
+			pos:         Position{WhiteBackRank, 4},
+			wantAtLeast: []Position{{WhiteBackRank, 2}},
 		},
 		{
 			name: "White king can castle with king-side rook if both have not been moved",
 			setup: func() *Game {
 				game := newEmptyGame()
 				king, kingSideRook := NewPiece(White, King), NewPiece(White, Rook)
-				game.board.grid[WhiteBackRow][4] = &king
-				game.board.grid[WhiteBackRow][7] = &kingSideRook
+				game.board.grid[WhiteBackRank][4] = &king
+				game.board.grid[WhiteBackRank][7] = &kingSideRook
 				return game
 			},
-			pos:         Position{WhiteBackRow, 4},
-			wantAtLeast: []Position{{WhiteBackRow, 6}},
+			pos:         Position{WhiteBackRank, 4},
+			wantAtLeast: []Position{{WhiteBackRank, 6}},
 		},
 		{
 			name: "White king can castle with both king-side & queen-side rooks if all have not been moved",
 			setup: func() *Game {
 				game := newEmptyGame()
 				king, kingSideRook, queenSideRook := NewPiece(White, King), NewPiece(White, Rook), NewPiece(White, Rook)
-				game.board.grid[WhiteBackRow][4] = &king
-				game.board.grid[WhiteBackRow][7] = &kingSideRook
-				game.board.grid[WhiteBackRow][0] = &queenSideRook
+				game.board.grid[WhiteBackRank][4] = &king
+				game.board.grid[WhiteBackRank][7] = &kingSideRook
+				game.board.grid[WhiteBackRank][0] = &queenSideRook
 				return game
 			},
-			pos: Position{WhiteBackRow, 4},
+			pos: Position{WhiteBackRank, 4},
 			wantAtLeast: []Position{
-				{WhiteBackRow, 2},
-				{WhiteBackRow, 6},
+				{WhiteBackRank, 2},
+				{WhiteBackRank, 6},
 			},
 		},
 		{
@@ -436,14 +409,14 @@ func TestGame_GetAvailableMoves(t *testing.T) {
 				game.castling.whiteKingMoved = true
 				king, kingSideRook, queenSideRook := NewPiece(White, King), NewPiece(White, Rook), NewPiece(White, Rook)
 				game.board.grid[3][6] = &king
-				game.board.grid[WhiteBackRow][7] = &kingSideRook
-				game.board.grid[WhiteBackRow][0] = &queenSideRook
+				game.board.grid[WhiteBackRank][7] = &kingSideRook
+				game.board.grid[WhiteBackRank][0] = &queenSideRook
 				return game
 			},
 			pos: Position{3, 6},
 			notWant: []Position{
-				{WhiteBackRow, 2},
-				{WhiteBackRow, 6},
+				{WhiteBackRank, 2},
+				{WhiteBackRank, 6},
 			},
 		},
 		{
@@ -453,15 +426,15 @@ func TestGame_GetAvailableMoves(t *testing.T) {
 				game.castling.whiteQueenSideRook.Moved = true
 				game.castling.whiteKingSideRook.Moved = true
 				king, kingSideRook, queenSideRook := NewPiece(White, King), NewPiece(White, Rook), NewPiece(White, Rook)
-				game.board.grid[WhiteBackRow][4] = &king
+				game.board.grid[WhiteBackRank][4] = &king
 				game.board.grid[1][7] = &kingSideRook
 				game.board.grid[1][0] = &queenSideRook
 				return game
 			},
-			pos: Position{WhiteBackRow, 4},
+			pos: Position{WhiteBackRank, 4},
 			notWant: []Position{
-				{WhiteBackRow, 2},
-				{WhiteBackRow, 6},
+				{WhiteBackRank, 2},
+				{WhiteBackRank, 6},
 			},
 		},
 		{
@@ -471,18 +444,18 @@ func TestGame_GetAvailableMoves(t *testing.T) {
 				whiteKing, whiteKingSideRook, whiteQueenSideRook := NewPiece(White, King), NewPiece(White, Rook), NewPiece(White, Rook)
 				whiteBishop, blackKnight := NewPiece(White, Bishop), NewPiece(Black, Knight)
 
-				game.board.grid[WhiteBackRow][0] = &whiteQueenSideRook
-				game.board.grid[WhiteBackRow][1] = &whiteBishop
-				game.board.grid[WhiteBackRow][4] = &whiteKing
-				game.board.grid[WhiteBackRow][5] = &blackKnight
-				game.board.grid[WhiteBackRow][7] = &whiteKingSideRook
+				game.board.grid[WhiteBackRank][0] = &whiteQueenSideRook
+				game.board.grid[WhiteBackRank][1] = &whiteBishop
+				game.board.grid[WhiteBackRank][4] = &whiteKing
+				game.board.grid[WhiteBackRank][5] = &blackKnight
+				game.board.grid[WhiteBackRank][7] = &whiteKingSideRook
 
 				return game
 			},
-			pos: Position{WhiteBackRow, 4},
+			pos: Position{WhiteBackRank, 4},
 			notWant: []Position{
-				{WhiteBackRow, 2},
-				{WhiteBackRow, 6},
+				{WhiteBackRank, 2},
+				{WhiteBackRank, 6},
 			},
 		},
 		{
@@ -490,39 +463,39 @@ func TestGame_GetAvailableMoves(t *testing.T) {
 			setup: func() *Game {
 				game := newEmptyGame()
 				king, queenSideRook := NewPiece(Black, King), NewPiece(Black, Rook)
-				game.board.grid[BlackBackRow][4] = &king
-				game.board.grid[BlackBackRow][0] = &queenSideRook
+				game.board.grid[BlackBackRank][4] = &king
+				game.board.grid[BlackBackRank][0] = &queenSideRook
 				return game
 			},
-			pos:         Position{BlackBackRow, 4},
-			wantAtLeast: []Position{{BlackBackRow, 2}},
+			pos:         Position{BlackBackRank, 4},
+			wantAtLeast: []Position{{BlackBackRank, 2}},
 		},
 		{
 			name: "Black king can castle with king-side rook if both have not been moved",
 			setup: func() *Game {
 				game := newEmptyGame()
 				king, kingSideRook := NewPiece(Black, King), NewPiece(Black, Rook)
-				game.board.grid[BlackBackRow][4] = &king
-				game.board.grid[BlackBackRow][7] = &kingSideRook
+				game.board.grid[BlackBackRank][4] = &king
+				game.board.grid[BlackBackRank][7] = &kingSideRook
 				return game
 			},
-			pos:         Position{BlackBackRow, 4},
-			wantAtLeast: []Position{{BlackBackRow, 6}},
+			pos:         Position{BlackBackRank, 4},
+			wantAtLeast: []Position{{BlackBackRank, 6}},
 		},
 		{
 			name: "Black king can castle with both king-side & queen-side rooks if all have not been moved",
 			setup: func() *Game {
 				game := newEmptyGame()
 				king, kingSideRook, queenSideRook := NewPiece(Black, King), NewPiece(Black, Rook), NewPiece(Black, Rook)
-				game.board.grid[BlackBackRow][4] = &king
-				game.board.grid[BlackBackRow][7] = &kingSideRook
-				game.board.grid[BlackBackRow][0] = &queenSideRook
+				game.board.grid[BlackBackRank][4] = &king
+				game.board.grid[BlackBackRank][7] = &kingSideRook
+				game.board.grid[BlackBackRank][0] = &queenSideRook
 				return game
 			},
-			pos: Position{BlackBackRow, 4},
+			pos: Position{BlackBackRank, 4},
 			wantAtLeast: []Position{
-				{BlackBackRow, 2},
-				{BlackBackRow, 6},
+				{BlackBackRank, 2},
+				{BlackBackRank, 6},
 			},
 		},
 		{
@@ -532,14 +505,14 @@ func TestGame_GetAvailableMoves(t *testing.T) {
 				game.castling.blackKingMoved = true
 				king, kingSideRook, queenSideRook := NewPiece(Black, King), NewPiece(Black, Rook), NewPiece(Black, Rook)
 				game.board.grid[4][6] = &king
-				game.board.grid[BlackBackRow][7] = &kingSideRook
-				game.board.grid[BlackBackRow][0] = &queenSideRook
+				game.board.grid[BlackBackRank][7] = &kingSideRook
+				game.board.grid[BlackBackRank][0] = &queenSideRook
 				return game
 			},
 			pos: Position{4, 6},
 			notWant: []Position{
-				{BlackBackRow, 2},
-				{BlackBackRow, 6},
+				{BlackBackRank, 2},
+				{BlackBackRank, 6},
 			},
 		},
 		{
@@ -549,15 +522,15 @@ func TestGame_GetAvailableMoves(t *testing.T) {
 				game.castling.blackQueenSideRook.Moved = true
 				game.castling.blackKingSideRook.Moved = true
 				king, kingSideRook, queenSideRook := NewPiece(Black, King), NewPiece(Black, Rook), NewPiece(Black, Rook)
-				game.board.grid[BlackBackRow][4] = &king
+				game.board.grid[BlackBackRank][4] = &king
 				game.board.grid[6][7] = &kingSideRook
 				game.board.grid[6][0] = &queenSideRook
 				return game
 			},
-			pos: Position{BlackBackRow, 4},
+			pos: Position{BlackBackRank, 4},
 			notWant: []Position{
-				{BlackBackRow, 2},
-				{BlackBackRow, 6},
+				{BlackBackRank, 2},
+				{BlackBackRank, 6},
 			},
 		},
 		{
@@ -567,18 +540,18 @@ func TestGame_GetAvailableMoves(t *testing.T) {
 				blackKing, blackKingSideRook, blackQueenSideRook := NewPiece(Black, King), NewPiece(Black, Rook), NewPiece(Black, Rook)
 				blackBishop, whiteKnight := NewPiece(Black, Bishop), NewPiece(White, Knight)
 
-				game.board.grid[BlackBackRow][0] = &blackQueenSideRook
-				game.board.grid[BlackBackRow][1] = &blackBishop
-				game.board.grid[BlackBackRow][4] = &blackKing
-				game.board.grid[BlackBackRow][5] = &whiteKnight
-				game.board.grid[BlackBackRow][7] = &blackKingSideRook
+				game.board.grid[BlackBackRank][0] = &blackQueenSideRook
+				game.board.grid[BlackBackRank][1] = &blackBishop
+				game.board.grid[BlackBackRank][4] = &blackKing
+				game.board.grid[BlackBackRank][5] = &whiteKnight
+				game.board.grid[BlackBackRank][7] = &blackKingSideRook
 
 				return game
 			},
-			pos: Position{BlackBackRow, 4},
+			pos: Position{BlackBackRank, 4},
 			notWant: []Position{
-				{BlackBackRow, 2},
-				{BlackBackRow, 6},
+				{BlackBackRank, 2},
+				{BlackBackRank, 6},
 			},
 		},
 		{
@@ -601,8 +574,8 @@ func TestGame_GetAvailableMoves(t *testing.T) {
 				game := newEmptyGame()
 				game.moves = append(game.moves, MoveDetails{
 					Piece:          NewPiece(Black, Pawn),
-					SourcePosition: Position{BlackBackRow, 4},
-					TargetPosition: Position{BlackBackRow - 2, 4},
+					SourcePosition: Position{BlackBackRank, 4},
+					TargetPosition: Position{BlackBackRank - 2, 4},
 				})
 				whitePawn := NewPiece(White, Pawn)
 				game.board.grid[4][4] = &whitePawn
@@ -620,8 +593,8 @@ func TestGame_GetAvailableMoves(t *testing.T) {
 				whitePawn, blackPawn := NewPiece(White, Pawn), NewPiece(Black, Pawn)
 				game.moves = append(game.moves, MoveDetails{
 					Piece:          blackPawn,
-					SourcePosition: Position{BlackBackRow, 4},
-					TargetPosition: Position{BlackBackRow - 2, 4},
+					SourcePosition: Position{BlackBackRank, 4},
+					TargetPosition: Position{BlackBackRank - 2, 4},
 				})
 				game.board.grid[5][4] = &blackPawn
 				game.board.grid[5][5] = &whitePawn
@@ -652,8 +625,8 @@ func TestGame_GetAvailableMoves(t *testing.T) {
 				game := newEmptyGame()
 				game.moves = append(game.moves, MoveDetails{
 					Piece:          NewPiece(White, Pawn),
-					SourcePosition: Position{WhiteBackRow, 4},
-					TargetPosition: Position{WhiteBackRow + 2, 4},
+					SourcePosition: Position{WhiteBackRank, 4},
+					TargetPosition: Position{WhiteBackRank + 2, 4},
 				})
 				blackPawn := NewPiece(Black, Pawn)
 				game.board.grid[4][4] = &blackPawn
@@ -671,8 +644,8 @@ func TestGame_GetAvailableMoves(t *testing.T) {
 				blackPawn, whitePawn := NewPiece(Black, Pawn), NewPiece(White, Pawn)
 				game.moves = append(game.moves, MoveDetails{
 					Piece:          whitePawn,
-					SourcePosition: Position{WhiteBackRow, 4},
-					TargetPosition: Position{WhiteBackRow + 2, 4},
+					SourcePosition: Position{WhiteBackRank, 4},
+					TargetPosition: Position{WhiteBackRank + 2, 4},
 				})
 				game.board.grid[2][4] = &whitePawn
 				game.board.grid[2][5] = &blackPawn
@@ -681,6 +654,448 @@ func TestGame_GetAvailableMoves(t *testing.T) {
 			pos: Position{2, 5},
 			wantAtLeast: []Position{
 				{1, 4},
+			},
+		},
+		{
+			name: "White rook on an open board slides along its whole rank and file",
+			setup: func() *Game {
+				game := newEmptyGame()
+				whiteRook := NewPiece(White, Rook)
+				game.board.grid[4][4] = &whiteRook
+				return game
+			},
+			pos: Position{4, 4},
+			want: []Position{
+				{0, 4},
+				{1, 4},
+				{2, 4},
+				{3, 4},
+				{4, 0},
+				{4, 1},
+				{4, 2},
+				{4, 3},
+				{4, 5},
+				{4, 6},
+				{4, 7},
+				{5, 4},
+				{6, 4},
+				{7, 4},
+			},
+		},
+		{
+			name: "White rook stops before a friendly piece and captures an enemy one",
+			setup: func() *Game {
+				game := newEmptyGame()
+				whiteRook := NewPiece(White, Rook)
+				game.board.grid[4][4] = &whiteRook
+				whitePawn := NewPiece(White, Pawn)
+				game.board.grid[4][6] = &whitePawn
+				blackPawn := NewPiece(Black, Pawn)
+				game.board.grid[2][4] = &blackPawn
+				return game
+			},
+			pos: Position{4, 4},
+			want: []Position{
+				{2, 4},
+				{3, 4},
+				{4, 0},
+				{4, 1},
+				{4, 2},
+				{4, 3},
+				{4, 5},
+				{5, 4},
+				{6, 4},
+				{7, 4},
+			},
+		},
+		{
+			name: "White bishop on an open board slides along all four diagonals",
+			setup: func() *Game {
+				game := newEmptyGame()
+				whiteBishop := NewPiece(White, Bishop)
+				game.board.grid[4][4] = &whiteBishop
+				return game
+			},
+			pos: Position{4, 4},
+			want: []Position{
+				{0, 0},
+				{1, 1},
+				{1, 7},
+				{2, 2},
+				{2, 6},
+				{3, 3},
+				{3, 5},
+				{5, 3},
+				{5, 5},
+				{6, 2},
+				{6, 6},
+				{7, 1},
+				{7, 7},
+			},
+		},
+		{
+			name: "White bishop stops before a friendly piece and captures an enemy one",
+			setup: func() *Game {
+				game := newEmptyGame()
+				whiteBishop := NewPiece(White, Bishop)
+				game.board.grid[4][4] = &whiteBishop
+				whitePawn := NewPiece(White, Pawn)
+				game.board.grid[6][6] = &whitePawn
+				blackPawn := NewPiece(Black, Pawn)
+				game.board.grid[2][2] = &blackPawn
+				return game
+			},
+			pos: Position{4, 4},
+			want: []Position{
+				{1, 7},
+				{2, 2},
+				{2, 6},
+				{3, 3},
+				{3, 5},
+				{5, 3},
+				{5, 5},
+				{6, 2},
+				{7, 1},
+			},
+		},
+		{
+			name: "White knight on an open board reaches all eight squares",
+			setup: func() *Game {
+				game := newEmptyGame()
+				whiteKnight := NewPiece(White, Knight)
+				game.board.grid[4][4] = &whiteKnight
+				return game
+			},
+			pos: Position{4, 4},
+			want: []Position{
+				{2, 3},
+				{2, 5},
+				{3, 2},
+				{3, 6},
+				{5, 2},
+				{5, 6},
+				{6, 3},
+				{6, 5},
+			},
+		},
+		{
+			name: "White knight jumps over surrounding pieces but not onto a friendly one",
+			setup: func() *Game {
+				game := newEmptyGame()
+				whiteKnight := NewPiece(White, Knight)
+				game.board.grid[4][4] = &whiteKnight
+				whitePawnOne := NewPiece(White, Pawn)
+				game.board.grid[3][3] = &whitePawnOne
+				whitePawnTwo := NewPiece(White, Pawn)
+				game.board.grid[3][4] = &whitePawnTwo
+				whitePawnThree := NewPiece(White, Pawn)
+				game.board.grid[3][5] = &whitePawnThree
+				whitePawnFour := NewPiece(White, Pawn)
+				game.board.grid[4][3] = &whitePawnFour
+				whitePawnFive := NewPiece(White, Pawn)
+				game.board.grid[4][5] = &whitePawnFive
+				whitePawnSix := NewPiece(White, Pawn)
+				game.board.grid[5][3] = &whitePawnSix
+				whitePawnSeven := NewPiece(White, Pawn)
+				game.board.grid[5][4] = &whitePawnSeven
+				whitePawnEight := NewPiece(White, Pawn)
+				game.board.grid[5][5] = &whitePawnEight
+				whiteRook := NewPiece(White, Rook)
+				game.board.grid[6][5] = &whiteRook
+				blackRook := NewPiece(Black, Rook)
+				game.board.grid[6][3] = &blackRook
+				return game
+			},
+			pos: Position{4, 4},
+			want: []Position{
+				{2, 3},
+				{2, 5},
+				{3, 2},
+				{3, 6},
+				{5, 2},
+				{5, 6},
+				{6, 3},
+			},
+		},
+		{
+			name: "White queen on an open board combines rook and bishop movement",
+			setup: func() *Game {
+				game := newEmptyGame()
+				whiteQueen := NewPiece(White, Queen)
+				game.board.grid[4][4] = &whiteQueen
+				return game
+			},
+			pos: Position{4, 4},
+			want: []Position{
+				{0, 0},
+				{0, 4},
+				{1, 1},
+				{1, 4},
+				{1, 7},
+				{2, 2},
+				{2, 4},
+				{2, 6},
+				{3, 3},
+				{3, 4},
+				{3, 5},
+				{4, 0},
+				{4, 1},
+				{4, 2},
+				{4, 3},
+				{4, 5},
+				{4, 6},
+				{4, 7},
+				{5, 3},
+				{5, 4},
+				{5, 5},
+				{6, 2},
+				{6, 4},
+				{6, 6},
+				{7, 1},
+				{7, 4},
+				{7, 7},
+			},
+		},
+		{
+			name: "White king on an open board reaches its eight neighbours",
+			setup: func() *Game {
+				game := newEmptyGame()
+				game.castling.whiteKingMoved = true
+				whiteKing := NewPiece(White, King)
+				game.board.grid[4][4] = &whiteKing
+				return game
+			},
+			pos: Position{4, 4},
+			want: []Position{
+				{3, 3},
+				{3, 4},
+				{3, 5},
+				{4, 3},
+				{4, 5},
+				{5, 3},
+				{5, 4},
+				{5, 5},
+			},
+		},
+		{
+			name: "Black rook on an open board slides along its whole rank and file",
+			setup: func() *Game {
+				game := newEmptyGame()
+				blackRook := NewPiece(Black, Rook)
+				game.board.grid[4][4] = &blackRook
+				return game
+			},
+			pos: Position{4, 4},
+			want: []Position{
+				{0, 4},
+				{1, 4},
+				{2, 4},
+				{3, 4},
+				{4, 0},
+				{4, 1},
+				{4, 2},
+				{4, 3},
+				{4, 5},
+				{4, 6},
+				{4, 7},
+				{5, 4},
+				{6, 4},
+				{7, 4},
+			},
+		},
+		{
+			name: "Black rook stops before a friendly piece and captures an enemy one",
+			setup: func() *Game {
+				game := newEmptyGame()
+				blackRook := NewPiece(Black, Rook)
+				game.board.grid[4][4] = &blackRook
+				blackPawn := NewPiece(Black, Pawn)
+				game.board.grid[4][6] = &blackPawn
+				whitePawn := NewPiece(White, Pawn)
+				game.board.grid[2][4] = &whitePawn
+				return game
+			},
+			pos: Position{4, 4},
+			want: []Position{
+				{2, 4},
+				{3, 4},
+				{4, 0},
+				{4, 1},
+				{4, 2},
+				{4, 3},
+				{4, 5},
+				{5, 4},
+				{6, 4},
+				{7, 4},
+			},
+		},
+		{
+			name: "Black bishop on an open board slides along all four diagonals",
+			setup: func() *Game {
+				game := newEmptyGame()
+				blackBishop := NewPiece(Black, Bishop)
+				game.board.grid[4][4] = &blackBishop
+				return game
+			},
+			pos: Position{4, 4},
+			want: []Position{
+				{0, 0},
+				{1, 1},
+				{1, 7},
+				{2, 2},
+				{2, 6},
+				{3, 3},
+				{3, 5},
+				{5, 3},
+				{5, 5},
+				{6, 2},
+				{6, 6},
+				{7, 1},
+				{7, 7},
+			},
+		},
+		{
+			name: "Black bishop stops before a friendly piece and captures an enemy one",
+			setup: func() *Game {
+				game := newEmptyGame()
+				blackBishop := NewPiece(Black, Bishop)
+				game.board.grid[4][4] = &blackBishop
+				blackPawn := NewPiece(Black, Pawn)
+				game.board.grid[6][6] = &blackPawn
+				whitePawn := NewPiece(White, Pawn)
+				game.board.grid[2][2] = &whitePawn
+				return game
+			},
+			pos: Position{4, 4},
+			want: []Position{
+				{1, 7},
+				{2, 2},
+				{2, 6},
+				{3, 3},
+				{3, 5},
+				{5, 3},
+				{5, 5},
+				{6, 2},
+				{7, 1},
+			},
+		},
+		{
+			name: "Black knight on an open board reaches all eight squares",
+			setup: func() *Game {
+				game := newEmptyGame()
+				blackKnight := NewPiece(Black, Knight)
+				game.board.grid[4][4] = &blackKnight
+				return game
+			},
+			pos: Position{4, 4},
+			want: []Position{
+				{2, 3},
+				{2, 5},
+				{3, 2},
+				{3, 6},
+				{5, 2},
+				{5, 6},
+				{6, 3},
+				{6, 5},
+			},
+		},
+		{
+			name: "Black knight jumps over surrounding pieces but not onto a friendly one",
+			setup: func() *Game {
+				game := newEmptyGame()
+				blackKnight := NewPiece(Black, Knight)
+				game.board.grid[4][4] = &blackKnight
+				blackPawnOne := NewPiece(Black, Pawn)
+				game.board.grid[3][3] = &blackPawnOne
+				blackPawnTwo := NewPiece(Black, Pawn)
+				game.board.grid[3][4] = &blackPawnTwo
+				blackPawnThree := NewPiece(Black, Pawn)
+				game.board.grid[3][5] = &blackPawnThree
+				blackPawnFour := NewPiece(Black, Pawn)
+				game.board.grid[4][3] = &blackPawnFour
+				blackPawnFive := NewPiece(Black, Pawn)
+				game.board.grid[4][5] = &blackPawnFive
+				blackPawnSix := NewPiece(Black, Pawn)
+				game.board.grid[5][3] = &blackPawnSix
+				blackPawnSeven := NewPiece(Black, Pawn)
+				game.board.grid[5][4] = &blackPawnSeven
+				blackPawnEight := NewPiece(Black, Pawn)
+				game.board.grid[5][5] = &blackPawnEight
+				blackRook := NewPiece(Black, Rook)
+				game.board.grid[6][5] = &blackRook
+				whiteRook := NewPiece(White, Rook)
+				game.board.grid[6][3] = &whiteRook
+				return game
+			},
+			pos: Position{4, 4},
+			want: []Position{
+				{2, 3},
+				{2, 5},
+				{3, 2},
+				{3, 6},
+				{5, 2},
+				{5, 6},
+				{6, 3},
+			},
+		},
+		{
+			name: "Black queen on an open board combines rook and bishop movement",
+			setup: func() *Game {
+				game := newEmptyGame()
+				blackQueen := NewPiece(Black, Queen)
+				game.board.grid[4][4] = &blackQueen
+				return game
+			},
+			pos: Position{4, 4},
+			want: []Position{
+				{0, 0},
+				{0, 4},
+				{1, 1},
+				{1, 4},
+				{1, 7},
+				{2, 2},
+				{2, 4},
+				{2, 6},
+				{3, 3},
+				{3, 4},
+				{3, 5},
+				{4, 0},
+				{4, 1},
+				{4, 2},
+				{4, 3},
+				{4, 5},
+				{4, 6},
+				{4, 7},
+				{5, 3},
+				{5, 4},
+				{5, 5},
+				{6, 2},
+				{6, 4},
+				{6, 6},
+				{7, 1},
+				{7, 4},
+				{7, 7},
+			},
+		},
+		{
+			name: "Black king on an open board reaches its eight neighbours",
+			setup: func() *Game {
+				game := newEmptyGame()
+				game.castling.blackKingMoved = true
+				blackKing := NewPiece(Black, King)
+				game.board.grid[4][4] = &blackKing
+				return game
+			},
+			pos: Position{4, 4},
+			want: []Position{
+				{3, 3},
+				{3, 4},
+				{3, 5},
+				{4, 3},
+				{4, 5},
+				{5, 3},
+				{5, 4},
+				{5, 5},
 			},
 		},
 	}

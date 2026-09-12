@@ -49,20 +49,20 @@ func (g *Game) initGame() {
 	g.turn = White
 	g.castling = castlingState{
 		whiteKingSideRook: rookStatus{
-			Rook:  g.board.grid[WhiteBackRow][7],
+			Rook:  g.board.grid[WhiteBackRank][7],
 			Moved: false,
 		},
 		whiteQueenSideRook: rookStatus{
-			Rook:  g.board.grid[WhiteBackRow][0],
+			Rook:  g.board.grid[WhiteBackRank][0],
 			Moved: false,
 		},
 		blackKingMoved: false,
 		blackKingSideRook: rookStatus{
-			Rook:  g.board.grid[BlackBackRow][7],
+			Rook:  g.board.grid[BlackBackRank][7],
 			Moved: false,
 		},
 		blackQueenSideRook: rookStatus{
-			Rook:  g.board.grid[BlackBackRow][0],
+			Rook:  g.board.grid[BlackBackRank][0],
 			Moved: false,
 		},
 	}
@@ -101,13 +101,13 @@ func (g *Game) getMovesForCastlablePieces(sourcePosition Position) []Position {
 	sourcePiece := g.board.grid[sourcePosition.Row][sourcePosition.Col]
 	sourceColor := sourcePiece.Color
 
-	backrow := WhiteBackRow
+	rank := WhiteBackRank
 	kingMoved := g.castling.whiteKingMoved
 	kingSideRookMoved := g.castling.whiteKingSideRook.Moved
 	queenSideRookMoved := g.castling.whiteQueenSideRook.Moved
 
 	if sourceColor == Black {
-		backrow = BlackBackRow
+		rank = BlackBackRank
 		kingMoved = g.castling.blackKingMoved
 		kingSideRookMoved = g.castling.blackKingSideRook.Moved
 		queenSideRookMoved = g.castling.blackQueenSideRook.Moved
@@ -119,30 +119,32 @@ func (g *Game) getMovesForCastlablePieces(sourcePosition Position) []Position {
 	}
 
 	// check if king side castling is possible if the rook has not been moved yet
-	if !kingSideRookMoved {
+	kingSideRook := g.board.grid[rank][7]
+	if !kingSideRookMoved && kingSideRook != nil && kingSideRook.Color == sourceColor && kingSideRook.PieceType == Rook {
 		// [n,x,x,x,K,x,x,R] -> [x,x,x,x,x,R,K,x]
 		kingSideEmpty := true
 		for _, col := range []int{5, 6} {
-			if g.board.grid[backrow][col] != nil {
+			if g.board.grid[rank][col] != nil {
 				kingSideEmpty = false
 			}
 		}
 		if kingSideEmpty {
-			castleMoves = append(castleMoves, Position{backrow, 6})
+			castleMoves = append(castleMoves, Position{rank, 6})
 		}
 	}
 
 	// check if queen side castling is possible if the rook has not been moved yet
-	if !queenSideRookMoved {
+	queenSideRook := g.board.grid[rank][0]
+	if !queenSideRookMoved && queenSideRook != nil && queenSideRook.Color == sourceColor && queenSideRook.PieceType == Rook {
 		// [R,x,x,x,K,x,x,R] -> [x,x,K,R,x,x,x,x]
 		queenSideEmpty := true
 		for _, col := range []int{1, 2, 3} {
-			if g.board.grid[backrow][col] != nil {
+			if g.board.grid[rank][col] != nil {
 				queenSideEmpty = false
 			}
 		}
 		if queenSideEmpty {
-			castleMoves = append(castleMoves, Position{backrow, 2})
+			castleMoves = append(castleMoves, Position{rank, 2})
 		}
 	}
 
@@ -177,8 +179,8 @@ func (g *Game) getMovesForPawn(sourcePosition Position) []Position {
 	// pawns can only move forward 2 spaces if it's the first turn.
 	// check if the currentRow it is in is the initial pawn row for the color for this validation.
 	// check if the rows leading up to it is blocked or not. if it's blocked then it can't traverse it as well
-	if (piece.Color == Black && sourceRow == BlackPawnRow) ||
-		(piece.Color == White && sourceRow == WhitePawnRow) {
+	if (piece.Color == Black && sourceRow == BlackPawnRank) ||
+		(piece.Color == White && sourceRow == WhitePawnRank) {
 		forwardTwo := Position{
 			Row: sourceRow + (currentPawnDirection * 2),
 			Col: sourceCol,
