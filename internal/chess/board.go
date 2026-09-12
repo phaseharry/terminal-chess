@@ -5,12 +5,24 @@ import (
 	"strings"
 )
 
+const (
+	WhitePawnRank int = 1
+	WhiteBackRank int = 0
+	BlackPawnRank int = 6
+	BlackBackRank int = 7
+)
+
 type Board struct {
 	grid [8][8]*Piece
 }
 
-func NewBoard() Board {
-	b := Board{}
+type Position struct {
+	Row int
+	Col int
+}
+
+func NewBoard() *Board {
+	b := &Board{}
 	b.init()
 	return b
 }
@@ -22,12 +34,12 @@ func (b *Board) init() {
 
 func (b *Board) initPieces(color Color) {
 	// default is white
-	pawnRow := 1
-	backRank := 0
+	pawnRow := WhitePawnRank
+	backRank := WhiteBackRank
 
 	if color == Black {
-		pawnRow = 6
-		backRank = 7
+		pawnRow = BlackPawnRank
+		backRank = BlackBackRank
 	}
 
 	for i := range 8 {
@@ -35,22 +47,27 @@ func (b *Board) initPieces(color Color) {
 		b.grid[pawnRow][i] = &pawn
 	}
 
-	knightOne, knightTwo := NewPiece(color, Knight), NewPiece(color, Knight)
-	b.grid[backRank][1] = &knightOne
-	b.grid[backRank][6] = &knightTwo
+	queenSideKnight, kingSideKnight := NewPiece(color, Knight), NewPiece(color, Knight)
+	b.grid[backRank][1] = &queenSideKnight
+	b.grid[backRank][6] = &kingSideKnight
 
-	bishopOne, bishopTwo := NewPiece(color, Bishop), NewPiece(color, Bishop)
-	b.grid[backRank][2] = &bishopOne
-	b.grid[backRank][5] = &bishopTwo
+	queenSideBishop, kingSideBishop := NewPiece(color, Bishop), NewPiece(color, Bishop)
+	b.grid[backRank][2] = &queenSideBishop
+	b.grid[backRank][5] = &kingSideBishop
 
-	rookOne, rookTwo := NewPiece(color, Rook), NewPiece(color, Rook)
-	b.grid[backRank][0] = &rookOne
-	b.grid[backRank][7] = &rookTwo
+	queenSideRook, kingSideRook := NewPiece(color, Rook), NewPiece(color, Rook)
+	b.grid[backRank][0] = &queenSideRook
+	b.grid[backRank][7] = &kingSideRook
 
 	queen := NewPiece(color, Queen)
 	king := NewPiece(color, King)
 	b.grid[backRank][3] = &queen
 	b.grid[backRank][4] = &king
+}
+
+func (b *Board) IsPositionOutOfBounds(pos Position) bool {
+	row, col := pos.Row, pos.Col
+	return row < 0 || row >= len(b.grid) || col < 0 || col >= len(b.grid[0])
 }
 
 func (b *Board) Print() {

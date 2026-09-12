@@ -1,6 +1,9 @@
 package chess
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 func TestNewBoard(t *testing.T) {
 	b := NewBoard()
@@ -169,4 +172,37 @@ func TestNewBoard(t *testing.T) {
 			}
 		}
 	})
+}
+
+func TestBoard_IsPositionOutOfBounds(t *testing.T) {
+	type IsPositionOutOfBoundTest struct {
+		name     string
+		position Position
+		want     bool
+	}
+	tests := []IsPositionOutOfBoundTest{
+		{"negative row", Position{-1, 0}, true},
+		{"negative column", Position{0, -1}, true},
+		{"negative row and negative column", Position{-1, -1}, true},
+		{"out of bounds row", Position{8, 0}, true},
+		{"out of bounds column", Position{0, 8}, true},
+	}
+	for row := range 8 {
+		for col := range 8 {
+			tests = append(tests, IsPositionOutOfBoundTest{
+				fmt.Sprintf("Row: %d, Column: %d", row, col),
+				Position{row, col},
+				false,
+			})
+		}
+	}
+
+	b := NewBoard()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := b.IsPositionOutOfBounds(tt.position); got != tt.want {
+				t.Errorf("IsPositionOutOfBounds(%v) = %v, want %v", tt.position, got, tt.want)
+			}
+		})
+	}
 }
