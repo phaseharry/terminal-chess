@@ -10,10 +10,11 @@ var ErrInvalidPosition = errors.New("invalid position")
 var ErrNoPieceAtPosition = errors.New("no piece at position to move")
 
 type Game struct {
-	board    *Board
-	turn     Color
-	moves    []MoveDetails
-	castling castlingState
+	board         *Board
+	turn          Color
+	moves         []MoveDetails
+	castling      castlingState
+	kingPositions kingPositions
 }
 
 type MoveDetails struct {
@@ -34,6 +35,11 @@ type castlingState struct {
 type rookStatus struct {
 	Rook  *Piece
 	Moved bool
+}
+
+type kingPositions struct {
+	whiteKing Position
+	blackKing Position
 }
 
 func NewGame() *Game {
@@ -66,6 +72,8 @@ func (g *Game) initGame() {
 			Moved: false,
 		},
 	}
+	g.kingPositions.whiteKing = Position{Row: WhiteBackRank, Col: 4}
+	g.kingPositions.blackKing = Position{Row: BlackBackRank, Col: 4}
 }
 
 func (g *Game) GetAvailableMoves(sourcePosition Position) ([]Position, error) {
@@ -251,6 +259,7 @@ func (g *Game) getMovesForPawn(sourcePosition Position) []Position {
 }
 
 func (g *Game) getMovesForPiece(sourcePosition Position, moveSpec MoveSpec) []Position {
+
 	var availableMoves []Position
 
 	sourcePiece := g.board.grid[sourcePosition.Row][sourcePosition.Col]
@@ -289,6 +298,21 @@ func (g *Game) getMovesForPiece(sourcePosition Position, moveSpec MoveSpec) []Po
 	}
 
 	return availableMoves
+}
+
+func (g *Game) isInCheck(color Color) {
+	kingPosition := g.kingPositions.whiteKing
+	if color == Black {
+		kingPosition = g.kingPositions.blackKing
+	}
+	// special case to test that the opponent's knights are not able to hit the current king
+  // oppKingsideKnight, oppQueenSideKnight :=
+
+  // otherwise validate all directions from the king until a collision happens.
+  // if the collision is a friendly piece, ignore and stop.
+  // if it's an opponent's piece, check to see if it's moveset can target the king
+  //
+
 }
 
 func (g *Game) Print() {
